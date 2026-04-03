@@ -1,0 +1,162 @@
+# ============================================================
+# Exemple Configuration Cron - Dalil Tounes
+# ============================================================
+#
+# Ce fichier contient des exemples de configuration cron
+# pour automatiser les backups Supabase.
+#
+# Installation :
+#   1. Copier le contenu désiré
+#   2. Éditer crontab : crontab -e
+#   3. Coller et sauvegarder
+#   4. Vérifier : crontab -l
+#
+# ============================================================
+
+# Format Cron :
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── heure (0 - 23)
+# │ │ ┌───────────── jour du mois (1 - 31)
+# │ │ │ ┌───────────── mois (1 - 12)
+# │ │ │ │ ┌───────────── jour de la semaine (0 - 7) (0 ou 7 = dimanche)
+# │ │ │ │ │
+# * * * * * commande à exécuter
+
+# ============================================================
+# BACKUP HEBDOMADAIRE (RECOMMANDÉ)
+# ============================================================
+
+# Tous les lundis à 3h du matin
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# Tous les dimanches à 2h du matin
+0 2 * * 0 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# ============================================================
+# BACKUP QUOTIDIEN
+# ============================================================
+
+# Tous les jours à 3h du matin
+0 3 * * * cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# Tous les jours à minuit
+0 0 * * * cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# ============================================================
+# BACKUP BI-HEBDOMADAIRE
+# ============================================================
+
+# Lundis et jeudis à 3h
+0 3 * * 1,4 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# ============================================================
+# BACKUP MENSUEL
+# ============================================================
+
+# Premier jour de chaque mois à 3h
+0 3 1 * * cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# Dernier jour du mois (approximatif - jour 28)
+0 3 28 * * cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# ============================================================
+# BACKUP AVEC NOTIFICATION EMAIL
+# ============================================================
+
+# Backup avec email en cas d'erreur
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 || echo "Backup failed" | mail -s "Dalil Tounes Backup Error" admin@daliltounes.tn
+
+# Backup avec email de confirmation
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 && echo "Backup completed successfully" | mail -s "Dalil Tounes Backup Success" admin@daliltounes.tn
+
+# ============================================================
+# BACKUP AVEC ROTATION DE LOGS
+# ============================================================
+
+# Backup avec rotation de logs (max 10MB)
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 && if [ $(stat -f%z /var/log/dalil-backup.log) -gt 10485760 ]; then mv /var/log/dalil-backup.log /var/log/dalil-backup.log.old; fi
+
+# ============================================================
+# EXEMPLES AVANCÉS
+# ============================================================
+
+# Backup + nettoyage logs anciens (>30 jours)
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 && find /var/log -name "dalil-backup.log.*" -mtime +30 -delete
+
+# Backup + compression des anciens backups
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 && find ./backups -name "*.sql" -mtime +7 -exec gzip {} \;
+
+# Backup + upload vers cloud storage (exemple AWS S3)
+0 3 * * 1 cd /path/to/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1 && aws s3 sync ./backups s3://dalil-tounes-backups/
+
+# ============================================================
+# VÉRIFICATION ET MONITORING
+# ============================================================
+
+# Vérifier la santé des backups tous les jours à midi
+0 12 * * * cd /path/to/dalil-tounes && ls -lh backups/ | tail -5 >> /var/log/dalil-backup-health.log
+
+# Compter les backups existants chaque semaine
+0 12 * * 1 cd /path/to/dalil-tounes && echo "Backups count: $(ls backups/*.sql | wc -l)" >> /var/log/dalil-backup-stats.log
+
+# ============================================================
+# VARIABLES D'ENVIRONNEMENT
+# ============================================================
+
+# Utiliser un fichier .env spécifique pour cron
+# 0 3 * * 1 cd /path/to/dalil-tounes && export $(cat .env.production | xargs) && npm run backup
+
+# ============================================================
+# NOTES IMPORTANTES
+# ============================================================
+#
+# 1. Remplacer /path/to/dalil-tounes par le chemin absolu réel
+#
+# 2. Créer le fichier de log si inexistant :
+#    sudo touch /var/log/dalil-backup.log
+#    sudo chown $USER:$USER /var/log/dalil-backup.log
+#
+# 3. Tester le cron manuellement avant :
+#    cd /path/to/dalil-tounes && npm run backup
+#
+# 4. Vérifier que Node.js est dans le PATH :
+#    which node
+#    which npm
+#
+# 5. Utiliser le chemin absolu si nécessaire :
+#    0 3 * * 1 cd /path/to/dalil-tounes && /usr/local/bin/node ./scripts/backup_supabase.js
+#
+# 6. Permissions d'exécution :
+#    chmod +x /path/to/dalil-tounes/scripts/backup_supabase.js
+#
+# 7. Consulter les logs cron système :
+#    tail -f /var/log/syslog | grep CRON
+#    (Linux)
+#
+#    tail -f /var/log/cron.log
+#    (Debian/Ubuntu)
+#
+#    log show --predicate 'process == "cron"' --last 1h
+#    (macOS)
+#
+# ============================================================
+# EXEMPLE CONFIGURATION COMPLÈTE RECOMMANDÉE
+# ============================================================
+
+# Variables d'environnement pour cron
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=admin@daliltounes.tn
+
+# Backup hebdomadaire tous les lundis à 3h
+0 3 * * 1 cd /home/user/dalil-tounes && npm run backup >> /var/log/dalil-backup.log 2>&1
+
+# Vérification santé des backups tous les jours à 12h
+0 12 * * * cd /home/user/dalil-tounes && ls -lh backups/ | tail -5 >> /var/log/dalil-backup-health.log
+
+# Nettoyage des anciens backups (>60 jours) tous les mois
+0 4 1 * * cd /home/user/dalil-tounes && find ./backups -name "*.sql" -mtime +60 -delete
+
+# ============================================================
+# FIN DU FICHIER EXEMPLE
+# ============================================================

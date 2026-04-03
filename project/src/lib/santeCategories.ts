@@ -1,0 +1,17 @@
+export const SANTE_CATEGORIES = [
+  { value: '', label: 'Tous les types' },
+  { value: 'Ambulance privée', label: 'Ambulance privée' },
+  { value: 'Cabinet dentaire', label: 'Cabinet dentaire' },
+  { value: 'Centre bien-être', label: 'Centre bien-être' },
+  { value: 'Centre d\'imagerie', label: 'Centre d\'imagerie' },
+  { value: 'Centre médical', label: 'Centre médical' },
+  { value: 'Clinique', label: 'Clinique' },
+  { value: 'Hôpital', label: 'Hôpital' },
+  { value: 'Kinésithérapie', label: 'Kinésithérapie' },
+  { value: 'Laboratoire d\'analyses', label: 'Laboratoire d\'analyses' },
+  { value: 'Ophtalmologie', label: 'Ophtalmologie' },
+  { value: 'Pharmacie', label: 'Pharmacie' },
+  { value: 'Pharmacie de nuit', label: 'Pharmacie de nuit' },
+  { value: 'Polyclinique', label: 'Polyclinique' },
+  { value: 'Vétérinaire', label: 'Vétérinaire' },
+];

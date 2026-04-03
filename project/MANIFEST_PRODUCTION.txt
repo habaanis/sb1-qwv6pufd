@@ -1,0 +1,96 @@
+=== MANIFEST COMPLET - Dalil Tounes Production ===
+Date: Thu Apr  2 17:39:42 UTC 2026
+Version: Production Ready
+
+=== STATISTIQUES ===
+Archive ZIP: 2.2M
+Archive TAR.GZ: 2.6M
+Nombre de fichiers: 80
+Taille totale: 4.2M
+
+=== CONTENU COMPLET ===
+Archive:  dalil-tounes-production.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     2958  2026-04-02 17:38   OG_IMAGE_GUIDE.md
+     1134  2026-04-02 17:38   _redirects
+        0  2026-04-02 17:38   icons/
+     6181  2026-04-02 17:38   icons/PWA_ICONS_GUIDE.md
+        0  2026-04-02 17:38   images/
+      813  2026-04-02 17:38   images/PLACEHOLDER_INFO.txt
+   524288  2026-04-02 17:38   images/cat_magasin.jpg.jpg
+    31328  2026-04-02 17:38   images/entreprise_banner.webp
+  1100419  2026-04-02 17:38   images/logo_dalil_tounes_sceau_luxe.png
+      521  2026-04-02 17:38   images/service-social.jpg.txt
+     2887  2026-04-02 17:38   manifest.json
+     6445  2026-04-02 17:38   offline.html
+      699  2026-04-02 17:38   robots.txt
+     5490  2026-04-02 17:38   service-worker.js
+   103520  2026-04-02 17:38   sitemap.xml
+        0  2026-04-02 17:38   assets/
+   121536  2026-04-02 17:38   assets/index-Df8lClEx.css
+   288771  2026-04-02 17:38   assets/vendor-map-B7kouAq4.js
+   413259  2026-04-02 17:38   assets/index-DFs102ki.js
+    36033  2026-04-02 17:38   assets/Businesses-B1KHomYw.js
+       66  2026-04-02 17:38   assets/vendor-react-BFY6NHyQ.js
+   167480  2026-04-02 17:38   assets/vendor-supabase-qSrGhBJl.js
+   164927  2026-04-02 17:38   assets/vendor-ui-BruIQ6Ee.js
+    32408  2026-04-02 17:38   assets/CitizensHealth-DvP9gmRG.js
+    53720  2026-04-02 17:38   assets/CitizensLeisure-CBOENf0i.js
+    26609  2026-04-02 17:38   assets/CitizensAdmin-CcC7H-fq.js
+    14213  2026-04-02 17:38   assets/Citizens-De6oqe4t.js
+    15037  2026-04-02 17:38   assets/leaflet-Dgihpmma.css
+    27435  2026-04-02 17:38   assets/CitizensServices-DUCrhtjj.js
+     1021  2026-04-02 17:38   assets/BackButton-Ca5rx-wZ.js
+    13259  2026-04-02 17:38   assets/CitizensShops-CdvhLYOT.js
+    17296  2026-04-02 17:38   assets/CitizensTourism-CpHnKUlk.js
+      277  2026-04-02 17:38   assets/subscriptionHelper-B2fYNrh1.js
+     9418  2026-04-02 17:38   assets/FeaturedBusinessesStrip-Co6cWu0Y.js
+    26690  2026-04-02 17:38   assets/Jobs-C0qyn6IG.js
+     4485  2026-04-02 17:38   assets/UnifiedBusinessCard-C6Lpf0R8.js
+    19830  2026-04-02 17:38   assets/PartnerSearch-DWiBt8fE.js
+     1061  2026-04-02 17:38   assets/cultureEventCategories-DvQ7U4MI.js
+    14213  2026-04-02 17:38   assets/CultureEvents-D6lMPfYZ.js
+    20917  2026-04-02 17:38   assets/BusinessEvents-Me6ffK-g.js
+    14274  2026-04-02 17:38   assets/TransportInscription-jaDlU4sr.js
+    45402  2026-04-02 17:38   assets/EducationNew-CMhFUuLk.js
+      276  2026-04-02 17:38   assets/urlParams-BlSoYSHB.js
+     5073  2026-04-02 17:38   assets/CategorySearchBar-Cm1s4oP4.js
+     7325  2026-04-02 17:38   assets/BusinessCard-BSx71D2e.js
+    45391  2026-04-02 17:38   assets/BusinessDetail-DPwu3dHo.js
+    24948  2026-04-02 17:38   assets/logoUtils-CErLbaZ8.js
+      582  2026-04-02 17:38   assets/url-BGz9Y13A.js
+    73851  2026-04-02 17:38   assets/LocalMarketplace-DqDMJpsN.js
+    10923  2026-04-02 17:38   assets/EducationEventForm-Cxo3o9CQ.js
+    11717  2026-04-02 17:38   assets/AroundMe-PL-lHzlI.js
+     9592  2026-04-02 17:38   assets/AdminSourcing-mUwsSxJY.js
+      740  2026-04-02 17:38   assets/dbTables-C4WjUnor.js
+      624  2026-04-02 17:38   assets/SearchDebug-BT_n6mLC.js
+      454  2026-04-02 17:38   assets/categoryDisplay-BqBCKL-k.js
+      665  2026-04-02 17:38   assets/I18nDebug-BVsb0q4s.js
+     2001  2026-04-02 17:38   assets/EntrepriseDebug-DAWWE3Ym.js
+     2619  2026-04-02 17:38   assets/PublishJob--NjDzGDD.js
+     8424  2026-04-02 17:38   assets/CandidateList-CB2-K75c.js
+      339  2026-04-02 17:38   assets/BusinessList-B8f2p4Jo.js
+    11824  2026-04-02 17:38   assets/BusinessDirectory-W6Cis4p8.js
+     2904  2026-04-02 17:38   assets/CandidateProfile-G8HB3LFF.js
+     3329  2026-04-02 17:38   assets/SignatureCard-C8UsfF1U.js
+      339  2026-04-02 17:38   assets/PartnerDirectory-DBNbim4W.js
+     1421  2026-04-02 17:38   assets/subscriptionTiers-dbid1von.js
+     6472  2026-04-02 17:38   assets/PartnerRequestsAdmin-DrEaJ17d.js
+     7211  2026-04-02 17:38   assets/CandidateJobMatches-dxdTvixr.js
+     8604  2026-04-02 17:38   assets/JobCandidateMatches-DTGjkpvY.js
+     2277  2026-04-02 17:38   assets/PremiumWrapper-OPabAUe6.js
+     9647  2026-04-02 17:38   assets/AdminInscriptionsLoisirs-Ba9FI6tb.js
+     9747  2026-04-02 17:38   assets/useFormTranslation-CDVwKj_l.js
+     2833  2026-04-02 17:38   assets/SEOHead-D2Mfjtbr.js
+     2084  2026-04-02 17:38   assets/CityAutocomplete-B-fnD2-X.js
+    16584  2026-04-02 17:38   assets/CandidateForm-DTeAhPSy.js
+    17674  2026-04-02 17:38   assets/JobPostForm-X1yyxDPB.js
+     8375  2026-04-02 17:38   assets/Auth-BRm17oJ_.js
+    14985  2026-04-02 17:38   assets/Concept-DwQD_L0I.js
+     5229  2026-04-02 17:38   assets/CandidateDashboard-WQyRD4-F.js
+     4689  2026-04-02 17:38   assets/CompanyDashboard-DErYPptD.js
+     2532  2026-04-02 17:38   index.html
+---------                     -------
+  3680624                     80 files
