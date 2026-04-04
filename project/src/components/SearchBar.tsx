@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Tables } from '../lib/dbTables';
 import { detectIntent, getCategoryRoute, getCategoryDisplayName, PageCategorie } from '../lib/intentDetection';
@@ -70,6 +71,7 @@ export default function SearchBar({
 
   mode = 'entreprises';
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const dir = isRTL(language as Lang) ? 'rtl' : 'ltr';
 
   const [q, setQ] = React.useState('');
@@ -266,8 +268,10 @@ export default function SearchBar({
     };
   }, []);
 
-  const goTo = (hash: string) => {
-    window.location.hash = hash;
+  const goTo = (path: string) => {
+    // Enlever le # si présent pour compatibilité
+    const cleanPath = path.startsWith('#') ? path.substring(1) : path;
+    navigate(cleanPath);
   };
 
   const onSubmit = (e: React.FormEvent) => {

@@ -59,6 +59,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignorer les navigations vers webcontainer (environnement de dev)
+  if (url.hostname.includes('webcontainer') || url.hostname.includes('local-credentialless')) {
+    return;
+  }
+
   // Ignorer les requêtes vers Supabase (toujours network-first)
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(

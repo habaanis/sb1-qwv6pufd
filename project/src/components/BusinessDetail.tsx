@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { supabase } from '../lib/BoltDatabase';
+import { supabase } from '../lib/supabaseClient';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Star, Instagram, Facebook, Linkedin, Youtube, Navigation, Download, QrCode, Clock, ChevronDown, Link as LinkIcon, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ImageGallery } from '../components/ImageGallery';
 import VideoPlayer from '../components/VideoPlayer';
 import EntrepriseAvisForm from '../components/EntrepriseAvisForm';
-import { generateShareUrl } from '../lib/slugify';
+import { generateShareUrl, extractIdFromSlugUrl } from '../lib/slugify';
 import { SEOHead } from './SEOHead';
 import { useHreflangPath } from '../hooks/useHreflangPath';
 import {
@@ -113,7 +114,7 @@ interface Business {
 }
 
 export const BusinessDetail = ({
-  businessId,
+  businessId: businessIdProp,
   business: businessProp,
   onNavigateBack,
   onClose,
@@ -122,10 +123,32 @@ export const BusinessDetail = ({
   console.log('🟢 --- CHARGEMENT DU NOUVEAU MODÈLE 450PX ELITE --- 🟢');
   console.log('Business reçu BRUT:', businessProp);
 
+  // Récupérer l'ID depuis l'URL si pas passé en prop
+  const { id: urlId, slug: urlSlug } = useParams<{ id?: string; slug?: string }>();
+  const navigate = useNavigate();
+
+  // Si on a un slug (route /p/:slug), extraire l'ID du slug
+  let extractedId: string | null = null;
+  if (urlSlug && !urlId) {
+    // Format attendu: nom-entreprise-{8-char-id}
+    const match = urlSlug.match(/.*-([a-f0-9]{8})$/i);
+    extractedId = match ? match[1] : null;
+
+    // Si on a trouvé un ID partiel, il faut retrouver l'ID complet depuis la base
+    if (extractedId) {
+      console.log('📌 ID partiel extrait du slug:', extractedId);
+    }
+  }
+
+  const businessId = businessIdProp || urlId || extractedId;
+
   // Normaliser les données pour supporter Airtable et Supabase
   const normalizedBusiness = normalizeBusiness(businessProp);
   console.log('Business NORMALISÉ:', normalizedBusiness);
-  console.log('BusinessId:', businessId);
+  console.log('BusinessId from prop:', businessIdProp);
+  console.log('BusinessId from URL:', urlId);
+  console.log('Final businessId:', businessId);
+  console.log('Slug from URL:', slug);
   console.log('AsModal:', asModal);
 
   const { language } = useLanguage();
@@ -144,7 +167,7 @@ export const BusinessDetail = ({
   useViewTracking(actualBusinessId);
 
   const loadedBusinessIdRef = useRef<string | null>(null);
-  const handleCloseRef = onClose || onNavigateBack;
+  const handleCloseRef = onClose || onNavigateBack || (() => navigate(-1));
 
   useEffect(() => {
     if (asModal && handleCloseRef) {
@@ -229,21 +252,46 @@ export const BusinessDetail = ({
     }
 
     const fetchBusiness = async () => {
+      console.log('🚀 [BusinessDetail] fetchBusiness démarré');
+      console.log('📌 actualBusinessId:', actualBusinessId);
+      console.log('📌 businessProp:', businessProp);
+
       setLoading(true);
       setError(false);
 
       try {
-        const { data, error } = await supabase
-          .from('entreprise')
-          .select('*')
-          .eq('id', actualBusinessId)
-          .maybeSingle();
+        // Si l'ID a 8 caractères, c'est un ID partiel (depuis le slug)
+        // Sinon c'est un ID complet
+        const isPartialId = actualBusinessId && actualBusinessId.length === 8;
+
+        console.log('🔍 Type de recherche:', isPartialId ? 'ID partiel (8 chars)' : 'ID complet');
+
+        let query = supabase.from('entreprise').select('*');
+
+        if (isPartialId) {
+          // Recherche par préfixe pour ID partiel
+          console.log('🔍 Recherche par ID partiel:', actualBusinessId);
+          query = query.ilike('id', `${actualBusinessId}%`);
+        } else {
+          // Recherche exacte pour ID complet
+          console.log('🔍 Recherche par ID complet:', actualBusinessId);
+          query = query.eq('id', actualBusinessId);
+        }
+
+        console.log('⏳ Exécution de la requête Supabase...');
+        const { data, error } = await query.maybeSingle();
+
+        console.log('📊 Résultat Supabase:', { data, error });
 
         if (error || !data) {
+          console.error('❌ Erreur lors du chargement de l\'entreprise:', error);
+          console.error('❌ Pas de données:', !data);
           setError(true);
           setLoading(false);
           return;
         }
+
+        console.log('✅ Entreprise trouvée:', data.nom);
 
         const mappedBusiness = {
           ...data,
@@ -389,19 +437,17 @@ export const BusinessDetail = ({
   }
 
   if (error || !business) {
-    const handleBack = onClose || onNavigateBack;
+    const handleBack = onClose || onNavigateBack || (() => navigate(-1));
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-gray-500 text-lg mb-6">{text.notFound}</p>
-        {handleBack && (
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 px-6 py-3 bg-[#D62828] text-white rounded-3xl hover:bg-[#b91c1c] transition-all"
-          >
-            <ArrowLeft size={20} />
-            {text.backToSearch}
-          </button>
-        )}
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 px-6 py-3 bg-[#D62828] text-white rounded-3xl hover:bg-[#b91c1c] transition-all"
+        >
+          <ArrowLeft size={20} />
+          {text.backToSearch}
+        </button>
       </div>
     );
   }
@@ -413,7 +459,7 @@ export const BusinessDetail = ({
   const tierLabel = getTierLabel(tier, language);
   const mediaLimits = getMediaLimits(tier);
 
-  const handleClose = onClose || onNavigateBack;
+  const handleClose = onClose || onNavigateBack || (() => navigate(-1));
 
   const getTierColors = () => {
     switch(tier) {

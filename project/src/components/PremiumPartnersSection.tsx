@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Star, Crown } from 'lucide-react';
-import { supabase } from '../lib/BoltDatabase';
+import { supabase } from '../lib/supabaseClient';
 import { SafeImage } from './SafeImage';
 import { parseImageUrls } from '../lib/imagekitUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface PremiumPartner {
   id: string;
@@ -22,6 +23,21 @@ interface PremiumPartnersSectionProps {
 export const PremiumPartnersSection = ({ onCardClick }: PremiumPartnersSectionProps) => {
   const [partners, setPartners] = useState<PremiumPartner[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleCardClick = (id: string) => {
+    console.log('🎯 [PremiumPartnersSection] Carte cliquée');
+    console.log('📌 ID entreprise:', id);
+    console.log('📌 onCardClick callback exists:', !!onCardClick);
+
+    if (onCardClick) {
+      console.log('✅ Appel du callback onCardClick');
+      onCardClick(id);
+    } else {
+      console.log('✅ Navigation directe React Router vers /business/' + id);
+      navigate(`/business/${id}`);
+    }
+  };
 
   useEffect(() => {
     const fetchPremiumPartners = async () => {
@@ -159,7 +175,7 @@ export const PremiumPartnersSection = ({ onCardClick }: PremiumPartnersSectionPr
                 return (
                   <div
                     key={partner.id}
-                    onClick={() => onCardClick(partner.id)}
+                    onClick={() => handleCardClick(partner.id)}
                     className="group cursor-pointer flex-shrink-0 w-[200px] md:w-auto h-full"
                     style={{ maxWidth: '240px' }}
                   >

@@ -74,8 +74,9 @@ function AppRouter() {
               {/* Entreprises */}
               <Route path="/businesses" element={<Businesses />} />
               <Route path="/entreprises" element={<Businesses />} />
-              <Route path="/business/:id" element={<BusinessDetail />} />
-              <Route path="/entreprises/:id" element={<BusinessDetail />} />
+              <Route path="/business/:id/:slug?" element={<BusinessDetail />} />
+              <Route path="/entreprise/:id/:slug?" element={<BusinessDetail />} />
+              <Route path="/entreprises/:id/:slug?" element={<BusinessDetail />} />
               <Route path="/p/:slug" element={<BusinessDetail />} />
 
               {/* Emplois */}

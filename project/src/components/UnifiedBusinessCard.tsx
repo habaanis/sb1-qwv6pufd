@@ -71,7 +71,10 @@ export const UnifiedBusinessCard = ({ business, onClick }: UnifiedBusinessCardPr
 
   return (
     <div
-      onClick={onClick}
+      onClick={(e) => {
+        console.log('🎯 [UnifiedBusinessCard] Carte cliquée', business.nom);
+        onClick();
+      }}
       className="relative bg-white rounded-xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl"
       style={{
         border: '2px solid #D4AF37',

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Tables } from '../lib/dbTables';
 import { buildEntrepriseUrl } from '../lib/url';
 import { useLanguage } from '../context/LanguageContext';
 import { t, isRTL, type Lang } from '../lib/i18n';
 import { normalizeText } from '../lib/textNormalization';
+import { generateBusinessUrl } from '../lib/slugify';
 import LocationSelectTunisie from './LocationSelectTunisie';
 import { Search, Briefcase, Tag, Building2 } from 'lucide-react';
 
@@ -25,6 +27,7 @@ interface SmartSuggestion {
   type: 'secteur' | 'categorie' | 'sous_categorie' | 'entreprise';
   count: number;
   similarity_score: number;
+  entreprise_id?: string | null;
 }
 
 interface Props {
@@ -34,6 +37,7 @@ interface Props {
 
 export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const dir = isRTL(language as Lang) ? 'rtl' : 'ltr';
 
   const [q, setQ] = React.useState('');
@@ -67,19 +71,28 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
       return cached;
     }
 
-    console.log('🔄 [Autocomplete] Calling RPC function...');
+    console.log('🔄 [Autocomplete] Calling RPC function search_smart_autocomplete...');
 
     try {
       const { data, error } = await supabase
         .rpc('search_smart_autocomplete', { search_query: query });
 
       if (error) {
-        console.error('❌ [Autocomplete] RPC Error:', error);
+        console.error('❌ [Autocomplete] RPC Error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return [];
       }
 
-      console.log('✅ [Autocomplete] RPC Results:', data);
+      console.log('✅ [Autocomplete] RPC Success! Results:', data);
       console.log('📊 [Autocomplete] Number of suggestions:', data?.length || 0);
+
+      if (data && data.length > 0) {
+        console.log('📋 [Autocomplete] First suggestion:', data[0]);
+      }
 
       const suggestions = (data || []) as SmartSuggestion[];
       cache.current.set(cacheKey, suggestions);
@@ -128,11 +141,19 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
     setQ(suggestion.suggestion);
     setShowDropdown(false);
 
-    // Lance immédiatement la recherche
+    // Si c'est une entreprise, aller directement vers la fiche
+    if (suggestion.type === 'entreprise' && suggestion.entreprise_id) {
+      const url = generateBusinessUrl(suggestion.suggestion, suggestion.entreprise_id);
+      console.log('🔗 Navigation vers entreprise:', url);
+      navigate(url);
+      return;
+    }
+
+    // Sinon, lancer la recherche dans la liste
     const params = new URLSearchParams();
     params.set('q', suggestion.suggestion);
     if (city.trim()) params.set('ville', city.trim());
-    window.location.hash = `#/entreprises?${params.toString()}`;
+    navigate(`/entreprises?${params.toString()}`);
 
     if (onSearch) {
       onSearch(suggestion.suggestion, city.trim());
@@ -145,7 +166,7 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
       const params = new URLSearchParams();
       params.set('q', q.trim());
       if (city.trim()) params.set('ville', city.trim());
-      window.location.hash = `#/entreprises?${params.toString()}`;
+      navigate(`/entreprises?${params.toString()}`);
       setShowDropdown(false);
 
       if (onSearch) {
@@ -200,7 +221,11 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
               className="w-full pl-10 pr-3 py-2 rounded-lg border border-[#D4AF37] bg-white text-sm focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none"
               value={q}
               onChange={onChangeQuery}
-              onFocus={() => q.trim().length >= MIN_CHARS && setShowDropdown(suggestions.length > 0)}
+              onFocus={() => {
+                if (q.trim().length >= MIN_CHARS) {
+                  setShowDropdown(true);
+                }
+              }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
             />
           </div>

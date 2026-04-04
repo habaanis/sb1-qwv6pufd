@@ -13,6 +13,16 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    // Configuration optimale pour Bolt WebContainer
+    hmr: {
+      overlay: true, // Afficher les erreurs en overlay
+    },
+    watch: {
+      usePolling: false, // Désactiver le polling pour de meilleures performances
+    },
+    // Pas besoin de historyApiFallback car on utilise HashRouter en dev
+  },
   build: {
     rollupOptions: {
       output: {

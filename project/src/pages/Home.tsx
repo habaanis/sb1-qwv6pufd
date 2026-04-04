@@ -1,5 +1,6 @@
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../lib/i18n';
+import { useNavigate } from 'react-router-dom';
 import { MapPinned, MessageSquare, BarChart3, Smartphone, Navigation, ChevronRight } from 'lucide-react';
 import { PremiumPartnersSection } from '../components/PremiumPartnersSection';
 import CompanyCountCard from '../components/CompanyCountCard';
@@ -15,21 +16,51 @@ import React from 'react';
 
 
 interface HomeProps {
-  onNavigate: (page: 'home' | 'businesses' | 'citizens' | 'jobs' | 'subscription' | 'candidateList' | 'businessList') => void;
-  onSuggestBusiness: () => void;
-  onNavigateToBusiness: (businessId: string) => void;
+  onNavigate?: (page: 'home' | 'businesses' | 'citizens' | 'jobs' | 'subscription' | 'candidateList' | 'businessList') => void;
+  onSuggestBusiness?: () => void;
+  onNavigateToBusiness?: (businessId: string) => void;
   onSearchSubmit?: (keyword: string, city: string) => void;
 }
 
-export const Home = ({ onNavigate, onSuggestBusiness, onNavigateToBusiness, onSearchSubmit }: HomeProps) => {
+export const Home = ({ onNavigate, onSuggestBusiness, onNavigateToBusiness, onSearchSubmit }: HomeProps = {}) => {
   const { language } = useLanguage();
   const t = useTranslation(language);
+  const navigate = useNavigate();
 
   // État pour capturer la valeur de recherche
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const handleNavigateToBusinessDetail = (businessId: number) => {
-    onNavigateToBusiness(businessId.toString());
+  const handleNavigateToBusinessDetail = (businessId: number | string) => {
+    console.log('🔥 [Home] handleNavigateToBusinessDetail appelé');
+    console.log('📌 businessId:', businessId);
+    console.log('📌 onNavigateToBusiness:', !!onNavigateToBusiness);
+
+    const id = typeof businessId === 'number' ? businessId.toString() : businessId;
+
+    if (onNavigateToBusiness) {
+      console.log('✅ Utilisation du callback onNavigateToBusiness');
+      onNavigateToBusiness(id);
+    } else {
+      console.log('✅ Navigation directe vers /business/' + id);
+      navigate(`/business/${id}`);
+    }
+  };
+
+  const handleNavigate = (page: string) => {
+    if (onNavigate) {
+      onNavigate(page as any);
+    } else {
+      // Fallback navigation avec React Router
+      const pageMap: Record<string, string> = {
+        'businesses': '/businesses',
+        'citizens': '/citizens',
+        'jobs': '/jobs',
+        'subscription': '/subscription',
+        'candidateList': '/candidates',
+        'businessList': '/business-list'
+      };
+      navigate(pageMap[page] || '/');
+    }
   };
 
   return (
@@ -143,7 +174,7 @@ export const Home = ({ onNavigate, onSuggestBusiness, onNavigateToBusiness, onSe
       </section>
 
       {/* 5. Établissements à la Une */}
-      <PremiumPartnersSection onCardClick={(id) => onNavigateToBusiness(id)} />
+      <PremiumPartnersSection onCardClick={(id) => handleNavigateToBusinessDetail(id)} />
 
       {/* 5.5 Slogan Marketing */}
       <section className="py-8 px-4 bg-white">

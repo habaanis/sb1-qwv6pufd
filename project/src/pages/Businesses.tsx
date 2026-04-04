@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../lib/i18n';
 import { supabase } from '../lib/supabaseClient';
 import { buildEntrepriseUrl, getHashQueryParams } from '../lib/url';
 import { readParams } from '../lib/urlParams';
+import { generateBusinessUrl } from '../lib/slugify';
 import { RPC, Tables } from '../lib/dbTables';
 import SearchBar from '../components/SearchBar';
 import BusinessSearchBar from '../components/BusinessSearchBar';
@@ -73,6 +75,8 @@ export const Businesses = ({
   onClearSearch
 }: BusinessesProps) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const t = useTranslation(language);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(false);
@@ -212,8 +216,8 @@ export const Businesses = ({
       const commerceLocalParam = hashParams.get('commerce_local');
 
       // Détection de l'ancre #suggest-business pour ouvrir le formulaire de suggestion
-      const currentHash = window.location.hash;
-      if (currentHash.includes('#suggest-business') || currentHash.includes('suggest-business')) {
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      if (currentPath.includes('suggest-business')) {
         setShowSuggestForm(true);
       }
 
@@ -504,11 +508,12 @@ export const Businesses = ({
         .order('nom', { ascending: true })
         .limit(30);
 
-      // RECHERCHE CÔTÉ SERVEUR (comme dans SearchBar)
-      if (searchTerm && searchTerm.trim().length > 0) {
+      // RECHERCHE CÔTÉ SERVEUR - Multi-colonnes avec tolérance aux fautes
+      if (searchTerm && searchTerm.trim().length >= 2) {
         const searchPattern = `%${searchTerm.trim()}%`;
         console.log(`[DEBUG] Filtre Recherche: "${searchTerm}" (pattern: ${searchPattern})`);
-        query = query.or(`nom.ilike.${searchPattern},sous_categories.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
+        // Recherche dans: nom, secteur, categorie, sous_categories, mots_cles_recherche
+        query = query.or(`nom.ilike.${searchPattern},secteur.ilike.${searchPattern},categorie.ilike.${searchPattern},sous_categories.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
       }
 
       if (selectedCity) {
@@ -617,6 +622,7 @@ export const Businesses = ({
         mappedData = mappedData.filter((business) => {
           // Sécurité totale contre les undefined/null
           const matchNom = normalizeText(business.name || '').includes(normalizedSearchTerm);
+          const matchSecteur = normalizeText(business.secteur || '').includes(normalizedSearchTerm);
 
           // PRIORITÉ RECHERCHE: Tous les badges sont indexés (même ceux non affichés)
           let matchBadges = false;
@@ -636,18 +642,20 @@ export const Businesses = ({
           const matchCategory = normalizeText(business.category || '').includes(normalizedSearchTerm);
           const matchServices = normalizeText(business.services || '').includes(normalizedSearchTerm);
 
-          const isMatch = matchNom || matchBadges || matchMotsCles || matchCategory || matchServices;
+          const isMatch = matchNom || matchSecteur || matchBadges || matchMotsCles || matchCategory || matchServices;
 
           if (isMatch) {
             console.log(`✅ Match trouvé:`, {
               nom: business.name,
               matchNom,
+              matchSecteur,
               matchBadges,
               badgeMatche: matchedBadge,
               totalBadges: business.badges?.length || 0,
               matchMotsCles,
               matchCategory,
               matchServices,
+              secteur: business.secteur || 'NULL',
               badges_complet: business.badges || 'NULL',
               mots_cles: (business.mots_cles_recherche || '').substring(0, 50) + '...',
               services: (business.services || '').substring(0, 50) + '...'
@@ -925,7 +933,7 @@ export const Businesses = ({
               <button
                 onClick={() => {
                   setPageCategorie(null);
-                  window.location.hash = '#/entreprises';
+                  navigate('/entreprises');
                 }}
                 className="text-[#4A1D43] hover:text-[#D4AF37] transition"
               >
@@ -1157,7 +1165,7 @@ export const Businesses = ({
                       setSelectedCategory('');
                       setPageCategorie(null);
                       setFilterPremium(false);
-                      window.location.hash = '#/entreprises';
+                      navigate('/entreprises');
                     }}
                     className="text-xs text-[#4A1D43] hover:text-[#D4AF37] font-medium"
                   >
@@ -1182,7 +1190,10 @@ export const Businesses = ({
                         imageUrl: business.imageUrl,
                         horaires_ok: business.horaires_ok
                       }}
-                      onClick={() => setSelectedBusiness(business)}
+                      onClick={() => {
+                        console.log('🔍 [BusinessCard] Ouverture modal pour:', business.name, business.id);
+                        setSelectedBusiness(business);
+                      }}
                       variant="premium"
                     />
                   );

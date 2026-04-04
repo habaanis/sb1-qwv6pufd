@@ -121,10 +121,11 @@ export const BusinessCard = ({ business, onClick, variant = 'simple' }: Business
   const isPremiumTier = tier === 'premium' || tier === 'elite' || tier === 'artisan';
 
   return (
-    <div className="block cursor-pointer" onClick={onClick}>
+    <div className="block">
       <SignatureCard
         tier={signatureTier}
         className={paddingClass}
+        onClick={onClick}
       >
       <div style={{ position: 'relative', minHeight: isMinimal ? '180px' : 'auto' }}>
         {isElite && (

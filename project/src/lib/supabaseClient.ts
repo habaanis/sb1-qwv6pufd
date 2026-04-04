@@ -22,7 +22,18 @@ function ensureClient(): SupabaseClient {
   const cur = readKeys();
 
   if (!client || !last || cur.url !== last.url || cur.anon !== last.anon) {
-    client = createClient(cur.url, cur.anon);
+    client = createClient(cur.url, cur.anon, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      },
+      global: {
+        headers: {
+          'x-application-name': 'dalil-tounes'
+        }
+      }
+    });
 
     if (import.meta.env.VITE_DEBUG_SEARCH === '1') {
       console.info(
