@@ -13,7 +13,7 @@ import { LOISIRS_CATEGORIES_KEYS } from '../lib/loisirCategories';
 import { SECTEURS_CULTURE } from '../lib/cultureEventCategories';
 import BackButton from '../components/BackButton';
 import CategorySearchBar from '../components/CategorySearchBar';
-import { UnifiedBusinessCard } from '../components/UnifiedBusinessCard';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';
 import { BusinessDetail } from '../components/BusinessDetail';
 import { useNavigate } from '../lib/url';
 
