@@ -543,15 +543,15 @@ export default function CitizensLeisure({ onNavigateBack }: CitizensLeisureProps
     try {
       let query = supabase
         .from('entreprise')
-        .select('id, nom, secteur, sous_categories, ville, adresse, telephone, latitude, longitude')
-        .eq('secteur', 'Loisirs & Événements');
+        .select('id, nom, secteur, "sous-catégories", ville, adresse, telephone, latitude, longitude')
+        .contains('secteur', ['Loisirs & Événements']);
 
       if (searchQuery) {
-        query = query.or(`nom.ilike.%${searchQuery}%,sous_categories.ilike.%${searchQuery}%`);
+        query = query.or(`nom.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
 
       if (categoryFilter) {
-        query = query.ilike('sous_categories', `%${categoryFilter}%`);
+        query = query.contains('"sous-catégories"', [categoryFilter]);
       }
 
       if (selectedLocation !== 'all') {
@@ -1223,8 +1223,8 @@ export default function CitizensLeisure({ onNavigateBack }: CitizensLeisureProps
                       <Popup>
                         <div className="p-2">
                           <h4 className="font-bold text-gray-900 mb-1">{lieu.nom}</h4>
-                          {lieu.sous_categories && (
-                            <p className="text-xs text-[#D4AF37] font-medium mb-2">{lieu.sous_categories}</p>
+                          {(lieu as any)['sous-catégories'] && (
+                            <p className="text-xs text-[#D4AF37] font-medium mb-2">{Array.isArray((lieu as any)['sous-catégories']) ? (lieu as any)['sous-catégories'].join(', ') : (lieu as any)['sous-catégories']}</p>
                           )}
                           {lieu.adresse && (
                             <p className="text-sm text-gray-600">{lieu.adresse}</p>

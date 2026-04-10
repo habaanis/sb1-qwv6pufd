@@ -12,7 +12,8 @@ import { getAdminCategoryLabel } from '../lib/adminCategories';
 import { readParams } from '../lib/urlParams';
 import { getSupabaseImageUrl } from '../lib/imageUtils';
 import CategorySearchBar from '../components/CategorySearchBar';
-import UnifiedBusinessCard from '../components/UnifiedBusinessCard';import { useNavigate } from '../lib/url';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';
+import { useNavigate } from '../lib/url';
 
 interface Demarche {
   id: string;
@@ -363,7 +364,7 @@ export default function CitizensAdmin({ onNavigateBack }: CitizensAdminProps = {
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, secteur, sous_categories, gouvernorat, "liste pages"')
+        .select('id, nom, secteur, "sous-catégories", gouvernorat, "liste pages"')
         .contains('"liste pages"', ['services citoyens'])
         .order('nom', { ascending: true })
         .limit(100);
@@ -373,11 +374,11 @@ export default function CitizensAdmin({ onNavigateBack }: CitizensAdminProps = {
       }
 
       if (adminSelectedCategory) {
-        query = query.eq('sous_categories', adminSelectedCategory);
+        query = query.contains('"sous-catégories"', [adminSelectedCategory]);
       }
 
       if (adminSearchTerm) {
-        query = query.or(`nom.ilike.%${adminSearchTerm}%,sous_categories.ilike.%${adminSearchTerm}%,"mots cles recherche".ilike.%${adminSearchTerm}%`);
+        query = query.or(`nom.ilike.%${adminSearchTerm}%,"mots cles recherche".ilike.%${adminSearchTerm}%,description.ilike.%${adminSearchTerm}%`);
       }
 
       const { data, error } = await query;

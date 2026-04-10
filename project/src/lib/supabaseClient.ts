@@ -1,18 +1,17 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './BoltDatabase.js';
 
-type Keys = { url: string; anon: string; source: 'BoltDatabase' | '.env' };
+type Keys = { url: string; anon: string; source: 'BoltDatabase' };
 
 function readKeys(): Keys {
-  const url = SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || '';
-  const anon = SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  const source: Keys['source'] = SUPABASE_URL ? 'BoltDatabase' : '.env';
+  const url = SUPABASE_URL;
+  const anon = SUPABASE_ANON_KEY;
 
   if (!url || !anon) {
-    console.error('[supabase] Clés manquantes — vérifie BoltDatabase.js ou tes variables .env');
+    console.error('[supabase] Clés manquantes — vérifie BoltDatabase.js');
   }
 
-  return { url, anon, source };
+  return { url, anon, source: 'BoltDatabase' };
 }
 
 let client: SupabaseClient | null = null;
@@ -47,8 +46,8 @@ function ensureClient(): SupabaseClient {
   return client!;
 }
 
-export const supabaseUrl = SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-export const supabaseAnonKey = SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabaseUrl = SUPABASE_URL;
+export const supabaseAnonKey = SUPABASE_ANON_KEY;
 
 // --- Debug logging (optionnel mais utile) ---
 

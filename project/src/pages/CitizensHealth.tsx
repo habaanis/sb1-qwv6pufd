@@ -19,7 +19,7 @@ import { Tables } from '../lib/dbTables';
 import { getSupabaseImageUrl } from '../lib/imageUtils';
 import BackButton from '../components/BackButton';
 import CategorySearchBar from '../components/CategorySearchBar';
-import { UnifiedBusinessCard } from '../components/UnifiedBusinessCard';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';
 import { BusinessCard } from '../components/BusinessCard';
 import { BusinessDetail } from '../components/BusinessDetail';
 import { useNavigate } from '../lib/url';
@@ -84,7 +84,7 @@ export default function CitizensHealth({ onNavigate }: CitizensHealthProps) {
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, secteur, sous_categories, categorie, gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok, "liste pages"')
+        .select('id, nom, secteur, "sous-catégories", "catégorie", gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok, "liste pages"')
         .contains('"liste pages"', ['santé'])
         .order('"niveau priorité abonnement"', { ascending: false, nullsFirst: false })
         .order('nom', { ascending: true })
@@ -95,12 +95,12 @@ export default function CitizensHealth({ onNavigate }: CitizensHealthProps) {
       }
 
       if (selectedSanteCategory) {
-        query = query.eq('sous_categories', selectedSanteCategory);
+        query = query.contains('"sous-catégories"', [selectedSanteCategory]);
       }
 
       if (searchTerm && searchTerm.trim().length > 0) {
         const searchPattern = `%${searchTerm.trim()}%`;
-        query = query.or(`nom.ilike.${searchPattern},sous_categories.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
+        query = query.or(`nom.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern},description.ilike.${searchPattern}`);
       }
 
       const { data, error: err } = await query;
@@ -113,10 +113,10 @@ export default function CitizensHealth({ onNavigate }: CitizensHealthProps) {
         const mappedData = (data || []).map((item: any) => ({
           id: item.id,
           name: item.nom || '',
-          category: item.sous_categories || '',
-          subCategories: item.sous_categories || '',
+          category: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
+          subCategories: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
           gouvernorat: item.gouvernorat || '',
-          secteur: item.secteur || '',
+          secteur: Array.isArray(item.secteur) ? item.secteur.join(', ') : (item.secteur || ''),
           city: item.ville || '',
           address: item.adresse || '',
           phone: item.telephone || '',
@@ -354,7 +354,7 @@ export default function CitizensHealth({ onNavigate }: CitizensHealthProps) {
                           <h3 className="font-bold text-[#4A1D43] mb-1 text-base group-hover:text-[#D4AF37] transition-colors" style={{ fontFamily: "'Playfair Display', serif" }}>
                             {business.nom || business.name}
                           </h3>
-                          <p className="text-sm text-gray-700 font-medium">{business.sous_categories || business.category}</p>
+                          <p className="text-sm text-gray-700 font-medium">{business.subCategories || business.category}</p>
                           {(business.ville || business.city) && (
                             <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                               <MapPin className="w-3 h-3 text-[#D4AF37]" />

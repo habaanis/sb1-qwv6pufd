@@ -130,13 +130,14 @@ export const BusinessDetail = ({
   // Si on a un slug (route /p/:slug), extraire l'ID du slug
   let extractedId: string | null = null;
   if (urlSlug && !urlId) {
-    // Format attendu: nom-entreprise-{8-char-id}
-    const match = urlSlug.match(/.*-([a-f0-9]{8})$/i);
-    extractedId = match ? match[1] : null;
-
-    // Si on a trouvé un ID partiel, il faut retrouver l'ID complet depuis la base
-    if (extractedId) {
-      console.log('📌 ID partiel extrait du slug:', extractedId);
+    // Format attendu: nom-entreprise-recXXXXXXXX (Airtable ID = dernier segment après le dernier tiret)
+    // Ex: "skila-mhadia-recmhQeR" → "recmhQeR"
+    const segments = urlSlug.split('-');
+    const lastSegment = segments[segments.length - 1];
+    // Airtable IDs start with "rec" followed by alphanumeric chars, or can be any short ID
+    if (lastSegment && lastSegment.length >= 6) {
+      extractedId = lastSegment;
+      console.log('📌 ID extrait du slug (dernier segment):', extractedId);
     }
   }
 
@@ -148,7 +149,7 @@ export const BusinessDetail = ({
   console.log('BusinessId from prop:', businessIdProp);
   console.log('BusinessId from URL:', urlId);
   console.log('Final businessId:', businessId);
-  console.log('Slug from URL:', slug);
+  console.log('Slug from URL:', urlSlug);
   console.log('AsModal:', asModal);
 
   const { language } = useLanguage();
@@ -168,6 +169,8 @@ export const BusinessDetail = ({
 
   const loadedBusinessIdRef = useRef<string | null>(null);
   const handleCloseRef = onClose || onNavigateBack || (() => navigate(-1));
+
+  const translatedCategory = business ? getCategory(getMultilingualField(business, 'categorie', language, true) || business.categorie || '') : '';
 
   useEffect(() => {
     if (asModal && handleCloseRef) {
@@ -260,23 +263,12 @@ export const BusinessDetail = ({
       setError(false);
 
       try {
-        // Si l'ID a 8 caractères, c'est un ID partiel (depuis le slug)
-        // Sinon c'est un ID complet
-        const isPartialId = actualBusinessId && actualBusinessId.length === 8;
-
-        console.log('🔍 Type de recherche:', isPartialId ? 'ID partiel (8 chars)' : 'ID complet');
+        console.log('🔍 Recherche par ID:', actualBusinessId);
 
         let query = supabase.from('entreprise').select('*');
 
-        if (isPartialId) {
-          // Recherche par préfixe pour ID partiel
-          console.log('🔍 Recherche par ID partiel:', actualBusinessId);
-          query = query.ilike('id', `${actualBusinessId}%`);
-        } else {
-          // Recherche exacte pour ID complet
-          console.log('🔍 Recherche par ID complet:', actualBusinessId);
-          query = query.eq('id', actualBusinessId);
-        }
+        // Recherche exacte d'abord, puis par préfixe pour les IDs extraits d'un slug (premiers 8 chars du UUID)
+        query = query.or(`id.eq.${actualBusinessId},id.ilike.${actualBusinessId}%`);
 
         console.log('⏳ Exécution de la requête Supabase...');
         const { data, error } = await query.maybeSingle();
@@ -493,7 +485,6 @@ export const BusinessDetail = ({
   const colors = getTierColors();
 
   // Récupération des champs traduits avec fallback
-  const translatedCategory = business ? getCategory(getMultilingualField(business, 'categorie', language, true) || business.categorie || '') : '';
   const translatedDescription = business ? (getMultilingualField(business, 'description', language, true) || business.description || '') : '';
   const translatedServices = business ? (getMultilingualField(business, 'services', language, true) || business.services || '') : '';
 

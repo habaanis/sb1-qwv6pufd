@@ -53,7 +53,7 @@ export default function CitizensShops({ onNavigate }: CitizensShopsProps = {}) {
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, ville, image_url, logo_url, categorie, sous_categories, gouvernorat, "liste pages"')
+        .select('id, nom, ville, image_url, logo_url, "catégorie", "sous-catégories", gouvernorat, "liste pages"')
         .contains('"liste pages"', ['commerces & magasins'])
         .order('nom', { ascending: true })
         .limit(100);
@@ -64,7 +64,7 @@ export default function CitizensShops({ onNavigate }: CitizensShopsProps = {}) {
 
       if (searchTerm) {
         const searchPattern = `%${searchTerm}%`;
-        query = query.or(`nom.ilike.${searchPattern},sous_categories.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
+        query = query.or(`nom.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern},description.ilike.${searchPattern}`);
       }
 
       const { data, error } = await query;
@@ -236,7 +236,7 @@ export default function CitizensShops({ onNavigate }: CitizensShopsProps = {}) {
                               <h3 className="font-bold text-gray-900 mb-1 group-hover:text-green-700 transition-colors">
                                 {shop.nom}
                               </h3>
-                              <p className="text-sm text-green-700 font-medium">{shop.sous_categories || shop.categorie}</p>
+                              <p className="text-sm text-green-700 font-medium">{Array.isArray((shop as any)['sous-catégories']) ? (shop as any)['sous-catégories'].join(', ') : ((shop as any)['sous-catégories'] || Array.isArray((shop as any)['catégorie']) ? (shop as any)['catégorie']?.join?.(', ') : (shop as any)['catégorie'] || '')}</p>
                             </div>
                           </div>
                           {shop.ville && (

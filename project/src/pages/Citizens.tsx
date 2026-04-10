@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Crosshair, HeartPulse, GraduationCap, ShoppingBag, Landmark, PartyPopper, Briefcase, ArrowLeft, Mail, Globe, MapPinIcon, Users } from 'lucide-react';
+import { Search, MapPin, Crosshair, HeartPulse, GraduationCap, ShoppingBag, Landmark, PartyPopper, Briefcase, ArrowLeft, Mail, Globe, MapPin as MapPinIcon, Users } from 'lucide-react';
 import LocalMarketplace from './LocalMarketplace';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../lib/i18n';
@@ -27,18 +27,14 @@ interface Suggestion {
 }
 
 async function searchEtablissements(keyword: string, city: string) {
-  let query = supabase
-    .from('entreprise')
-    .select('id, nom, ville, categorie, sous_categories, telephone, site_web, description, email, adresse')
-    .in('status', ['active', 'approved'])
-    .limit(20);
+  const { data, error } = await supabase.rpc('search_entreprise_smart', {
+    p_q: keyword || null,
+    p_ville: city || null,
+    p_categorie: null,
+    p_scope: null,
+    p_limit: 20
+  });
 
-  if (keyword) {
-    query = query.or(`nom.ilike.%${keyword}%, categorie.ilike.%${keyword}%, sous_categories.ilike.%${keyword}%, description.ilike.%${keyword}%`);
-  }
-  if (city) query = query.eq('gouvernorat', city);
-
-  const { data, error } = await query;
   if (error) {
     console.error('❌ Erreur recherche Supabase:', error.message);
     return [];
@@ -49,44 +45,36 @@ async function searchEtablissements(keyword: string, city: string) {
 async function getSuggestions(keyword: string, city: string = '') {
   if (!keyword || keyword.length < 2) return [];
 
-  let query = supabase
-    .from('entreprise')
-    .select('id, nom, ville, categorie')
-    .in('status', ['active', 'approved'])
-    .limit(10);
+  const { data, error } = await supabase.rpc('search_smart_autocomplete', {
+    search_query: keyword
+  });
 
-  if (keyword) {
-    query = query.or(`nom.ilike.%${keyword}%, categorie.ilike.%${keyword}%`);
-  }
-  if (city) {
-    query = query.eq('gouvernorat', city);
-  }
-
-  const { data, error } = await query;
   if (error) {
     console.error('❌ Erreur suggestions:', error.message);
     return [];
   }
-  return data || [];
+  return (data || []).map((row: any) => ({
+    id: row.entreprise_id || row.suggestion,
+    nom: row.suggestion,
+    ville: city,
+    categorie: row.type === 'categorie' ? row.suggestion : '',
+  }));
 }
 
 async function getCitySuggestions(cityInput: string) {
   if (!cityInput || cityInput.length < 2) return [];
 
-  const { data, error } = await supabase
-    .from('entreprise')
-    .select('ville')
-    .ilike('ville', `%${cityInput}%`)
-    .in('status', ['active', 'approved'])
-    .limit(10);
+  const { data, error } = await supabase.rpc('enterprise_cities_suggest', {
+    p_q: cityInput,
+    p_limit: 10
+  });
 
   if (error) {
     console.error('❌ Erreur suggestions villes:', error.message);
     return [];
   }
 
-  const uniqueCities = [...new Set(data?.map(d => d.ville).filter(Boolean))];
-  return uniqueCities;
+  return (data || []).map((row: any) => row.ville).filter(Boolean);
 }
 
 async function getEtablissementsByCategory(categoryKey: string) {
@@ -101,12 +89,13 @@ async function getEtablissementsByCategory(categoryKey: string) {
   const categoryName = categoryMap[categoryKey];
   if (!categoryName) return [];
 
-  const { data, error } = await supabase
-    .from('entreprise')
-    .select('id, nom, ville, categorie, sous_categories, telephone, site_web, description, email, adresse')
-    .in('status', ['active', 'approved'])
-    .ilike('categorie', `%${categoryName}%`)
-    .limit(50);
+  const { data, error } = await supabase.rpc('search_entreprise_smart', {
+    p_q: categoryName,
+    p_ville: null,
+    p_categorie: null,
+    p_scope: null,
+    p_limit: 50
+  });
 
   if (error) {
     console.error('❌ Erreur recherche par catégorie:', error.message);
@@ -159,7 +148,7 @@ export default function Citizens({ onNavigate }: CitizensProps = {}) {
       setIsLoading(true);
       let query = supabaseClient
         .from(Tables.ENTREPRISE)
-        .select('id, nom, ville, categorie, sous_categories, telephone, site_web, description, email, adresse')
+        .select('id, nom, ville, "catégorie", "sous-catégories", telephone, site_web, description, email, adresse')
         .order('nom', { ascending: true })
         .limit(60);
 

@@ -201,7 +201,7 @@ export default function AroundMe() {
           // Pas de filtre métier : afficher tous les établissements
           const { data, error } = await supabase
             .from('entreprise')
-            .select('id, nom, categorie, sous_categories, ville, adresse, telephone, latitude, longitude, image_url')
+            .select('id, nom, "catégorie", "sous-catégories", ville, adresse, telephone, latitude, longitude, image_url')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null);
 

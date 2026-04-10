@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { supabase } from '../lib/BoltDatabase';
+import { supabase, SUPABASE_URL } from '../lib/BoltDatabase';
 import { Lock, CheckCircle, MapPin, Phone, Building2, Tag, Map, Navigation, Maximize2, Minimize2, Filter, ExternalLink, AlertCircle, Loader, Eye } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../lib/i18n';
@@ -254,7 +254,7 @@ export default function AdminSourcing() {
   };
 
   const getSupabaseUrl = (id: string): string => {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const projectUrl = SUPABASE_URL || '';
     const projectId = projectUrl.replace('https://', '').split('.')[0];
     return `https://supabase.com/dashboard/project/${projectId}/editor/28539?schema=public&tableId=28539&filter=id%3Aeq%3A${id}`;
   };

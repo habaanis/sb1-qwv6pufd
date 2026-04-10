@@ -71,7 +71,7 @@ export default function BusinessDirectory({ mode, title, subtitle }: BusinessDir
 
       // Filtrage par catégorie
       if (selectedCategory) {
-        query = query.ilike('categories', `%${selectedCategory}%`);
+        query = query.contains('"catégorie"', [selectedCategory]);
       }
 
       // Filtrage par ville
@@ -82,7 +82,7 @@ export default function BusinessDirectory({ mode, title, subtitle }: BusinessDir
       // Recherche par mot-clé
       if (searchTerm) {
         const kw = searchTerm.trim();
-        query = query.or(`nom.ilike.%${kw}%,description.ilike.%${kw}%,categories.ilike.%${kw}%,sous_categories.ilike.%${kw}%,ville.ilike.%${kw}%`);
+        query = query.or(`nom.ilike.%${kw}%,description.ilike.%${kw}%,"mots cles recherche".ilike.%${kw}%,ville.ilike.%${kw}%`);
       }
 
       const { data, error: queryError, count } = await query
@@ -405,10 +405,13 @@ export default function BusinessDirectory({ mode, title, subtitle }: BusinessDir
                   )}
 
                   {/* Categories / Tags */}
-                  {business.sous_categories && (
+                  {(business as any)['sous-catégories'] && (
                     <div className="mb-4">
                       <div className="flex flex-wrap gap-1">
-                        {business.sous_categories.split(/[,;]/).slice(0, 3).map((subCat, idx) => (
+                        {(Array.isArray((business as any)['sous-catégories'])
+                          ? (business as any)['sous-catégories']
+                          : ((business as any)['sous-catégories'] as string).split(/[,;]/)
+                        ).slice(0, 3).map((subCat: string, idx: number) => (
                           <span
                             key={idx}
                             className={`inline-block px-2 py-1 text-xs rounded ${

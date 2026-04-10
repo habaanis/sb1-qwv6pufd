@@ -32,18 +32,19 @@ export function useSectorCategories(secteur: string) {
     try {
       const { data, error: queryError } = await supabase
         .from('entreprise')
-        .select('categorie')
-        .eq('secteur', secteur)
-        .not('categorie', 'is', null);
+        .select('"catégorie"')
+        .contains('secteur', [secteur])
+        .not('"catégorie"', 'is', null);
 
       if (queryError) throw queryError;
 
       const categoryCounts: Record<string, number> = {};
-      data?.forEach((row) => {
-        const cat = row.categorie;
-        if (cat) {
-          categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-        }
+      data?.forEach((row: any) => {
+        const cats = row['catégorie'];
+        const catList = Array.isArray(cats) ? cats : (cats ? [cats] : []);
+        catList.forEach((cat: string) => {
+          if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        });
       });
 
       const catOptions: CategoryOption[] = Object.entries(categoryCounts)
@@ -73,19 +74,20 @@ export function useSectorCategories(secteur: string) {
     try {
       const { data, error: queryError } = await supabase
         .from('entreprise')
-        .select('sous_categories')
-        .eq('secteur', secteur)
-        .eq('categorie', selectedCategory)
-        .not('sous_categories', 'is', null);
+        .select('"sous-catégories"')
+        .contains('secteur', [secteur])
+        .contains('"catégorie"', [selectedCategory])
+        .not('"sous-catégories"', 'is', null);
 
       if (queryError) throw queryError;
 
       const subCatCounts: Record<string, number> = {};
-      data?.forEach((row) => {
-        const subCat = row.sous_categories;
-        if (subCat) {
-          subCatCounts[subCat] = (subCatCounts[subCat] || 0) + 1;
-        }
+      data?.forEach((row: any) => {
+        const subCats = row['sous-catégories'];
+        const subCatList = Array.isArray(subCats) ? subCats : (subCats ? [subCats] : []);
+        subCatList.forEach((subCat: string) => {
+          if (subCat) subCatCounts[subCat] = (subCatCounts[subCat] || 0) + 1;
+        });
       });
 
       const subCatOptions: SubCategoryOption[] = Object.entries(subCatCounts)

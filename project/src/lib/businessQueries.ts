@@ -14,7 +14,7 @@ export const BUSINESS_COLUMNS = `
   adresse,
   ville,
   gouvernorat,
-  categorie,
+  "catégorie",
   secteur,
   description,
   telephone,
@@ -28,9 +28,7 @@ export const BUSINESS_COLUMNS = `
   image_url,
   image_couverture,
   horaires_ok,
-  note_google,
   "Note Google Globale",
-  nombre_avis,
   "Compteur Avis Google",
   "Lien Avis Google",
   "statut Abonnement",
@@ -70,10 +68,10 @@ export async function fetchBusinesses(options: {
 
   // Filtres
   if (secteur) {
-    query = query.eq('secteur', secteur);
+    query = query.contains('secteur', [secteur]);
   }
   if (categorie) {
-    query = query.ilike('categorie', `%${categorie}%`);
+    query = query.contains('"catégorie"', [categorie]);
   }
   if (ville) {
     query = query.eq('ville', ville);

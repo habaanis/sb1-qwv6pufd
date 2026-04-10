@@ -17,19 +17,22 @@ export function useBusinessCategories() {
 
       const { data, error: queryError } = await supabase
         .from('entreprise')
-        .select('sous_categories')
-        .eq('secteur', 'entreprise')
-        .not('sous_categories', 'is', null);
+        .select('"sous-catégories"')
+        .not('"sous-catégories"', 'is', null);
 
       if (queryError) throw queryError;
 
-      const uniqueCategories = [...new Set(
-        (data || [])
-          .map((item) => item.sous_categories)
-          .filter((cat): cat is string => cat !== null && cat !== '')
-      )].sort();
+      const allSubCats: string[] = [];
+      (data || []).forEach((item: any) => {
+        const val = item['sous-catégories'];
+        if (Array.isArray(val)) {
+          allSubCats.push(...val.filter(Boolean));
+        } else if (typeof val === 'string' && val) {
+          allSubCats.push(val);
+        }
+      });
 
-      setCategories(uniqueCategories);
+      setCategories([...new Set(allSubCats)].sort());
     } catch (err) {
       console.error('Error fetching business categories:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch categories');

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Tables } from '../lib/dbTables';
 import { buildEntrepriseUrl } from '../lib/url';
 import { useLanguage } from '../context/LanguageContext';
 import { t, isRTL, type Lang } from '../lib/i18n';
@@ -67,79 +66,23 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
     }
 
     try {
-      const term = `%${query}%`;
-
-      const [byNom, byCategorie] = await Promise.all([
-        supabase
-          .from('entreprise')
-          .select('id, nom, ville, categorie, sous_categorie')
-          .ilike('nom', term)
-          .limit(10),
-        supabase
-          .from('entreprise')
-          .select('id, nom, ville, categorie, sous_categorie')
-          .ilike('categorie', term)
-          .not('categorie', 'is', null)
-          .limit(10),
-      ]);
-
-      const nomResults = byNom.data || [];
-      const categorieResults = byCategorie.data || [];
-
-      const seen = new Set<string>();
-      const suggestions: SmartSuggestion[] = [];
-
-      const startTermLower = query.toLowerCase();
-
-      // Entreprises correspondant au nom — ceux qui commencent par le terme en premier
-      const sortedByNom = [...nomResults].sort((a, b) => {
-        const aStarts = (a.nom || '').toLowerCase().startsWith(startTermLower) ? 0 : 1;
-        const bStarts = (b.nom || '').toLowerCase().startsWith(startTermLower) ? 0 : 1;
-        return aStarts - bStarts;
+      const { data, error } = await supabase.rpc('search_smart_autocomplete', {
+        search_query: query
       });
 
-      for (const row of sortedByNom) {
-        if (!row.nom) continue;
-        const key = `entreprise:${row.id}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        suggestions.push({
-          suggestion: row.nom,
-          type: 'entreprise',
-          count: 1,
-          similarity_score: row.nom.toLowerCase().startsWith(startTermLower) ? 1 : 0.5,
-          entreprise_id: row.id,
-        });
+      if (error) {
+        console.error('❌ [Autocomplete] RPC error:', error);
+        return [];
       }
 
-      // Catégories uniques correspondant à la recherche
-      const uniqueCategories = new Map<string, number>();
-      for (const row of categorieResults) {
-        if (!row.categorie) continue;
-        uniqueCategories.set(row.categorie, (uniqueCategories.get(row.categorie) || 0) + 1);
-      }
+      const result: SmartSuggestion[] = (data || []).map((row: any) => ({
+        suggestion: row.suggestion,
+        type: row.type as SmartSuggestion['type'],
+        count: Number(row.count) || 1,
+        similarity_score: Number(row.similarity_score) || 0,
+        entreprise_id: row.entreprise_id || null,
+      }));
 
-      const sortedCategories = [...uniqueCategories.entries()].sort((a, b) => {
-        const aStarts = a[0].toLowerCase().startsWith(startTermLower) ? 0 : 1;
-        const bStarts = b[0].toLowerCase().startsWith(startTermLower) ? 0 : 1;
-        return aStarts - bStarts || b[1] - a[1];
-      });
-
-      for (const [categorie, count] of sortedCategories) {
-        const key = `categorie:${categorie}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        suggestions.push({
-          suggestion: categorie,
-          type: 'categorie',
-          count,
-          similarity_score: categorie.toLowerCase().startsWith(startTermLower) ? 1 : 0.5,
-          entreprise_id: null,
-        });
-      }
-
-      // Limiter à 10 suggestions au total
-      const result = suggestions.slice(0, 10);
       cache.current.set(cacheKey, result);
       return result;
     } catch (err) {
@@ -322,31 +265,8 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
                 className="py-2.5 px-4 cursor-pointer hover:bg-gradient-to-r hover:from-[#D4AF37]/5 hover:to-transparent transition-all group"
                 onClick={() => onSelectSuggestion(suggestion)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    {getSuggestionIcon(suggestion.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 text-sm group-hover:text-[#4A1D43] transition-colors">
-                      {suggestion.suggestion}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-500">
-                        {getSuggestionTypeLabel(suggestion.type)}
-                      </span>
-                      {suggestion.count > 1 && (
-                        <>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-xs text-[#D4AF37] font-medium">
-                            {suggestion.count} {language === 'fr' ? 'résultats' : language === 'ar' ? 'نتائج' : 'results'}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Search className="w-4 h-4 text-[#4A1D43]" />
-                  </div>
+                <div className="font-medium text-gray-900 text-sm group-hover:text-[#4A1D43] transition-colors">
+                  {suggestion.suggestion}
                 </div>
               </li>
             ))}

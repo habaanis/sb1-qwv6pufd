@@ -229,7 +229,7 @@ export const Businesses = ({
         pageCat,
         premiumParam,
         commerceLocalParam,
-        suggestFormTrigger: currentHash.includes('suggest-business')
+        suggestFormTrigger: currentPath.includes('suggest-business')
       });
       console.log('═══════════════════════════════════════\n');
 
@@ -392,7 +392,7 @@ export const Businesses = ({
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, secteur, sous_categories, categorie, gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok')
+        .select('id, nom, secteur, "sous-catégories", "catégorie", gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok')
         .order('"niveau priorité abonnement"', { ascending: false, nullsFirst: false })
         .order('nom', { ascending: true })
         .limit(10);
@@ -423,8 +423,8 @@ export const Businesses = ({
           id: data[0].id,
           nom: data[0].nom,
           secteur: data[0].secteur,
-          sous_categories: data[0].sous_categories,
-          categorie: data[0].categorie,
+          sous_categories: data[0]['sous-catégories'],
+          categorie: data[0]['catégorie'],
           badges_from_db: data[0].badges,
           services: data[0].services?.substring(0, 50) + '...' || 'NULL',
           mots_cles_recherche: data[0]['mots cles recherche']?.substring(0, 100) + '...' || 'NULL',
@@ -437,10 +437,10 @@ export const Businesses = ({
       const mappedData = (data || []).map((item: any) => ({
         id: item.id,
         name: item.nom || '',
-        category: item.sous_categories || '',
-        subCategories: item.sous_categories || '',
+        category: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
+        subCategories: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
         gouvernorat: item.gouvernorat || '',
-        secteur: item.secteur || '',
+        secteur: Array.isArray(item.secteur) ? item.secteur.join(', ') : (item.secteur || ''),
         city: item.ville || '',
         address: item.adresse || '',
         phone: item.telephone || '',
@@ -503,17 +503,15 @@ export const Businesses = ({
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, secteur, sous_categories, categorie, gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok')
+        .select('id, nom, secteur, "sous-catégories", "catégorie", gouvernorat, ville, adresse, telephone, email, site_web, description, services, image_url, logo_url, "statut Abonnement", "niveau priorité abonnement", "mots cles recherche", "Lien Instagram", "lien facebook", "Lien TikTok", "Lien LinkedIn", "Lien YouTube", lien_x, horaires_ok')
         .order('"niveau priorité abonnement"', { ascending: false, nullsFirst: false })
         .order('nom', { ascending: true })
         .limit(30);
 
-      // RECHERCHE CÔTÉ SERVEUR - Multi-colonnes avec tolérance aux fautes
       if (searchTerm && searchTerm.trim().length >= 2) {
         const searchPattern = `%${searchTerm.trim()}%`;
         console.log(`[DEBUG] Filtre Recherche: "${searchTerm}" (pattern: ${searchPattern})`);
-        // Recherche dans: nom, secteur, categorie, sous_categories, mots_cles_recherche
-        query = query.or(`nom.ilike.${searchPattern},secteur.ilike.${searchPattern},categorie.ilike.${searchPattern},sous_categories.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
+        query = query.or(`nom.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern},description.ilike.${searchPattern}`);
       }
 
       if (selectedCity) {
@@ -523,15 +521,15 @@ export const Businesses = ({
 
       if (selectedCategory === 'finance') {
         console.log(`[DEBUG] Filtre Finance avec sous-catégories:`, FINANCE_SUBCATEGORIES);
-        query = query.in('sous_categories', FINANCE_SUBCATEGORIES);
+        query = query.overlaps('"sous-catégories"', FINANCE_SUBCATEGORIES);
       } else if (selectedCategory) {
         console.log(`[DEBUG] Filtre Catégorie: "${selectedCategory}"`);
-        query = query.eq('sous_categories', selectedCategory);
+        query = query.contains('"sous-catégories"', [selectedCategory]);
       }
 
       if (filterPremium) {
         console.log(`[DEBUG] Filtre Premium activé (Elite/Premium/Artisan)`);
-        query = query.or('\"statut Abonnement\".ilike.%elite%,\"statut Abonnement\".ilike.%premium%,\"statut Abonnement\".ilike.%artisan%');
+        query = query.or('"statut Abonnement".ilike.%elite%,"statut Abonnement".ilike.%premium%,"statut Abonnement".ilike.%artisan%');
       }
 
       if (filterCommerceLocal) {
@@ -567,8 +565,8 @@ export const Businesses = ({
           badges_from_db: data[0].badges,
           services: data[0].services?.substring(0, 50) + '...' || 'NULL',
           mots_cles_recherche: data[0]['mots cles recherche']?.substring(0, 100) + '...' || 'NULL',
-          sous_categories: data[0].sous_categories,
-          categorie: data[0].categorie,
+          sous_categories: data[0]['sous-catégories'],
+          categorie: data[0]['catégorie'],
           statut_abonnement: data[0]['statut Abonnement'],
           gouvernorat: data[0].gouvernorat
         });
@@ -577,10 +575,10 @@ export const Businesses = ({
       let mappedData = (data || []).map((item: any) => ({
         id: item.id,
         name: item.nom,
-        category: item.sous_categories || '',
-        subCategories: item.sous_categories || '',
+        category: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
+        subCategories: Array.isArray(item['sous-catégories']) ? item['sous-catégories'].join(', ') : (item['sous-catégories'] || ''),
         gouvernorat: item.gouvernorat || '',
-        secteur: item.secteur || '',
+        secteur: Array.isArray(item.secteur) ? item.secteur.join(', ') : (item.secteur || ''),
         city: item.ville || '',
         address: item.adresse || '',
         phone: item.telephone || '',

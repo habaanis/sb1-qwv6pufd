@@ -369,21 +369,6 @@ export async function searchHealthProfessionals(opts) {
 --------------------------------------------------------- */
 export async function getEmergencyFacilities() {
   try {
-    // Essayer d'abord la table dédiée emergency_facilities
-    const { data: emergencyData, error: emergencyError } = await supabase
-      .from('emergency_facilities')
-      .select('name, phone, address')
-      .eq('is_active', true)
-      .order('name', { ascending: true })
-      .limit(10);
-
-    // Si la table existe et contient des données, on les retourne
-    if (!emergencyError && emergencyData && emergencyData.length > 0) {
-      console.log('✅ Établissements d\'urgence (table dédiée):', emergencyData.length);
-      return emergencyData;
-    }
-
-    // Fallback : chercher dans la table entreprise
     const { data, error } = await supabase
       .from('entreprise')
       .select('nom as name, telephone as phone, adresse as address')
@@ -396,7 +381,7 @@ export async function getEmergencyFacilities() {
       return [];
     }
 
-    console.log('✅ Établissements d\'urgence trouvés (entreprise):', data?.length || 0);
+    console.log('✅ Établissements d\'urgence trouvés:', data?.length || 0);
     return data || [];
   } catch (err) {
     console.error('❌ Erreur critique getEmergencyFacilities:', err.message);
@@ -408,30 +393,7 @@ export async function getEmergencyFacilities() {
    💊 Fonction : Récupérer le lien des pharmacies de garde (VERSION AMÉLIORÉE)
 --------------------------------------------------------- */
 export async function getOnCallPharmaciesLink() {
-  try {
-    // Essayer de récupérer depuis la table settings
-    const { data } = await supabase
-      .from('settings')
-      .select('key, value')
-      .eq('key', 'pharmacies_de_garde_url')
-      .limit(1)
-      .maybeSingle();
-
-    // Si trouvé dans settings, retourner la valeur
-    if (data?.value) {
-      console.log('✅ Lien pharmacies de garde (settings):', data.value);
-      return data.value;
-    }
-
-    // Fallback : lien par défaut
-    const defaultLink = 'https://www.pharmacie.tn/garde';
-    console.log('✅ Lien pharmacies de garde (par défaut):', defaultLink);
-    return defaultLink;
-  } catch (err) {
-    console.error('❌ Erreur getOnCallPharmaciesLink:', err.message);
-    // En cas d'erreur, retourner le lien par défaut
-    return 'https://www.pharmacie.tn/garde';
-  }
+  return 'https://www.pharmacie.tn/garde';
 }
 
 /* ---------------------------------------------------------

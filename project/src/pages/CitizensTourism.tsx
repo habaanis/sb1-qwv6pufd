@@ -6,7 +6,7 @@ import SearchBar from '../components/SearchBar';
 import { FeaturedBusinessesStrip } from '../components/FeaturedBusinessesStrip';
 import { scrollToWithOffsetDelayed } from '../lib/scrollUtils';
 import { getSupabaseImageUrl } from '../lib/imageUtils';
-import { UnifiedBusinessCard } from '../components/UnifiedBusinessCard';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';
 import { BusinessDetail } from '../components/BusinessDetail';
 import { useNavigate } from '../lib/url';
 
@@ -55,7 +55,7 @@ export default function CitizensTourism({ onNavigate }: CitizensTourismProps = {
     try {
       let query = supabase
         .from(Tables.ENTREPRISE)
-        .select('id, nom, ville, gouvernorat, adresse, telephone, site_web, email, image_url, logo_url, categorie, sous_categories, description, horaires')
+        .select('id, nom, ville, gouvernorat, adresse, telephone, site_web, email, image_url, logo_url, "catégorie", "sous-catégories", description, horaires')
         .contains('"liste pages"', ['tourisme local & expatriation'])
         .order('nom', { ascending: true })
         .limit(100);
@@ -66,7 +66,7 @@ export default function CitizensTourism({ onNavigate }: CitizensTourismProps = {
 
       if (searchTerm) {
         const searchPattern = `%${searchTerm}%`;
-        query = query.or(`nom.ilike.${searchPattern},"sous categories".ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern}`);
+        query = query.or(`nom.ilike.${searchPattern},"mots cles recherche".ilike.${searchPattern},description.ilike.${searchPattern}`);
       }
 
       const { data, error } = await query;
