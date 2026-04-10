@@ -6,7 +6,7 @@ import { getStructureImageUrl } from '../lib/imageUtils';
 import { useState, useEffect } from 'react';
 import BackButton from '../components/BackButton';
 import CategorySearchBar from '../components/CategorySearchBar';
-import { UnifiedBusinessCard } from '../components/UnifiedBusinessCard';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';
 import { supabase } from '../lib/supabaseClient';
 import { BusinessDetail } from '../components/BusinessDetail';
 
