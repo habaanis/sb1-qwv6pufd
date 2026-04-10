@@ -160,5 +160,5 @@ const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     </div>
   );
 };
-
-export default UnifiedSearchBar;
+export const UnifiedBusinessCard = (props) => { ... }
+export default UnifiedBusinessCard;
