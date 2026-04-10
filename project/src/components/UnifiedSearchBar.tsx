@@ -59,44 +59,89 @@ export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
     }
   };
 
-  const getSmartSuggestions = async (query: string) => {
+  const getSmartSuggestions = async (query: string): Promise<SmartSuggestion[]> => {
     const cacheKey = normalizeText(query);
 
-    console.log('🔍 [Autocomplete] Search term:', query);
-    console.log('🔍 [Autocomplete] Cache key:', cacheKey);
-
     if (cache.current.has(cacheKey)) {
-      const cached = cache.current.get(cacheKey)!;
-      console.log('✅ [Autocomplete] Cache HIT:', cached);
-      return cached;
+      return cache.current.get(cacheKey)!;
     }
 
-    console.log('🔄 [Autocomplete] Calling RPC function search_smart_autocomplete...');
-
     try {
-      const { data, error } = await supabase
-        .rpc('search_smart_autocomplete', { search_query: query });
+      const term = `%${query}%`;
 
-      if (error) {
-        console.error('❌ [Autocomplete] RPC Error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+      const [byNom, byCategorie] = await Promise.all([
+        supabase
+          .from('entreprise')
+          .select('id, nom, ville, categorie, sous_categorie')
+          .ilike('nom', term)
+          .limit(10),
+        supabase
+          .from('entreprise')
+          .select('id, nom, ville, categorie, sous_categorie')
+          .ilike('categorie', term)
+          .not('categorie', 'is', null)
+          .limit(10),
+      ]);
+
+      const nomResults = byNom.data || [];
+      const categorieResults = byCategorie.data || [];
+
+      const seen = new Set<string>();
+      const suggestions: SmartSuggestion[] = [];
+
+      const startTermLower = query.toLowerCase();
+
+      // Entreprises correspondant au nom — ceux qui commencent par le terme en premier
+      const sortedByNom = [...nomResults].sort((a, b) => {
+        const aStarts = (a.nom || '').toLowerCase().startsWith(startTermLower) ? 0 : 1;
+        const bStarts = (b.nom || '').toLowerCase().startsWith(startTermLower) ? 0 : 1;
+        return aStarts - bStarts;
+      });
+
+      for (const row of sortedByNom) {
+        if (!row.nom) continue;
+        const key = `entreprise:${row.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        suggestions.push({
+          suggestion: row.nom,
+          type: 'entreprise',
+          count: 1,
+          similarity_score: row.nom.toLowerCase().startsWith(startTermLower) ? 1 : 0.5,
+          entreprise_id: row.id,
         });
-        return [];
       }
 
-      console.log('✅ [Autocomplete] RPC Success! Results:', data);
-      console.log('📊 [Autocomplete] Number of suggestions:', data?.length || 0);
-
-      if (data && data.length > 0) {
-        console.log('📋 [Autocomplete] First suggestion:', data[0]);
+      // Catégories uniques correspondant à la recherche
+      const uniqueCategories = new Map<string, number>();
+      for (const row of categorieResults) {
+        if (!row.categorie) continue;
+        uniqueCategories.set(row.categorie, (uniqueCategories.get(row.categorie) || 0) + 1);
       }
 
-      const suggestions = (data || []) as SmartSuggestion[];
-      cache.current.set(cacheKey, suggestions);
-      return suggestions;
+      const sortedCategories = [...uniqueCategories.entries()].sort((a, b) => {
+        const aStarts = a[0].toLowerCase().startsWith(startTermLower) ? 0 : 1;
+        const bStarts = b[0].toLowerCase().startsWith(startTermLower) ? 0 : 1;
+        return aStarts - bStarts || b[1] - a[1];
+      });
+
+      for (const [categorie, count] of sortedCategories) {
+        const key = `categorie:${categorie}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        suggestions.push({
+          suggestion: categorie,
+          type: 'categorie',
+          count,
+          similarity_score: categorie.toLowerCase().startsWith(startTermLower) ? 1 : 0.5,
+          entreprise_id: null,
+        });
+      }
+
+      // Limiter à 10 suggestions au total
+      const result = suggestions.slice(0, 10);
+      cache.current.set(cacheKey, result);
+      return result;
     } catch (err) {
       console.error('❌ [Autocomplete] Exception:', err);
       return [];
