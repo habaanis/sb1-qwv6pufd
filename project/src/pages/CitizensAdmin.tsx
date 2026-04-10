@@ -12,8 +12,7 @@ import { getAdminCategoryLabel } from '../lib/adminCategories';
 import { readParams } from '../lib/urlParams';
 import { getSupabaseImageUrl } from '../lib/imageUtils';
 import CategorySearchBar from '../components/CategorySearchBar';
-import { UnifiedBusinessCard } from '../components/UnifiedBusinessCard';
-import { useNavigate } from '../lib/url';
+import UnifiedBusinessCard from '../components/UnifiedBusinessCard';import { useNavigate } from '../lib/url';
 
 interface Demarche {
   id: string;
