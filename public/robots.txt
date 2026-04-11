@@ -1,0 +1,39 @@
+# Dalil Tounes - Robots.txt
+# Guide officiel pour les moteurs de recherche
+
+User-agent: *
+Allow: /
+
+# Block admin and sourcing pages from indexing
+Disallow: /admin-sourcing
+Disallow: /admin
+Disallow: /sourcing
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /debug
+
+# Allow all public pages
+Allow: /businesses
+Allow: /citizens
+Allow: /jobs
+Allow: /subscription
+Allow: /p/
+Allow: /event/
+Allow: /job/
+Allow: /culture/
+
+# Crawl delay (optional - délai entre requêtes)
+Crawl-delay: 1
+
+# Sitemap location - fichier XML généré automatiquement
+Sitemap: https://dalil-tounes.com/sitemap.xml
+
+# Bots spécifiques
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Yandex
+Allow: /
