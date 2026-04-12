@@ -1,0 +1,290 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
+import { buildEntrepriseUrl } from '../lib/url';
+import { useLanguage } from '../context/LanguageContext';
+import { t, isRTL, type Lang } from '../lib/i18n';
+import { normalizeText } from '../lib/textNormalization';
+import { generateBusinessUrl } from '../lib/slugify';
+import LocationSelectTunisie from './LocationSelectTunisie';
+import { Search, Briefcase, Tag, Building2 } from 'lucide-react';
+
+const MIN_CHARS = 2;
+
+interface SearchResult {
+  id: string;
+  nom?: string;
+  ville: string;
+  categorie?: string;
+  sous_categorie?: string;
+  metier?: string;
+  _rank?: number;
+}
+
+interface SmartSuggestion {
+  suggestion: string;
+  type: 'secteur' | 'categorie' | 'sous_categorie' | 'entreprise';
+  count: number;
+  similarity_score: number;
+  entreprise_id?: string | null;
+}
+
+interface Props {
+  className?: string;
+  onSearch?: (query: string, city: string) => void;
+}
+
+export default function UnifiedSearchBar({ className = '', onSearch }: Props) {
+  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const dir = isRTL(language as Lang) ? 'rtl' : 'ltr';
+
+  const [q, setQ] = React.useState('');
+  const [city, setCity] = React.useState('');
+  const [suggestions, setSuggestions] = React.useState<SmartSuggestion[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const timer = React.useRef<number | null>(null);
+  const cache = React.useRef<Map<string, SmartSuggestion[]>>(new Map());
+
+  const getPlaceholder = () => {
+    switch (language) {
+      case 'ar':
+        return 'ما الذي تبحث عنه؟ (مهنة، خدمة، اسم...)';
+      case 'en':
+        return 'What are you looking for? (Profession, service, name...)';
+      default:
+        return 'Que recherchez-vous ? (Métier, service, nom...)';
+    }
+  };
+
+  const getSmartSuggestions = async (query: string): Promise<SmartSuggestion[]> => {
+    const cacheKey = normalizeText(query);
+
+    if (cache.current.has(cacheKey)) {
+      return cache.current.get(cacheKey)!;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('search_smart_autocomplete', {
+        search_query: query
+      });
+
+      if (error) {
+        console.error('❌ [Autocomplete] RPC error:', error);
+        return [];
+      }
+
+      const result: SmartSuggestion[] = (data || []).map((row: any) => ({
+        suggestion: row.suggestion,
+        type: row.type as SmartSuggestion['type'],
+        count: Number(row.count) || 1,
+        similarity_score: Number(row.similarity_score) || 0,
+        entreprise_id: row.entreprise_id || null,
+      }));
+
+      cache.current.set(cacheKey, result);
+      return result;
+    } catch (err) {
+      console.error('❌ [Autocomplete] Exception:', err);
+      return [];
+    }
+  };
+
+  const onChangeQuery = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.currentTarget.value ?? '';
+    setQ(value);
+
+    if (timer.current) window.clearTimeout(timer.current);
+
+    if (value.trim().length < MIN_CHARS) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    timer.current = window.setTimeout(async () => {
+      setLoading(true);
+      console.log('⏱️ [Autocomplete] Debounce triggered for:', value.trim());
+
+      try {
+        const smartSuggestions = await getSmartSuggestions(value.trim());
+        setSuggestions(smartSuggestions);
+
+        // Affiche toujours le dropdown si on a cherché (même 0 résultat)
+        setShowDropdown(true);
+
+        console.log(`📋 [Autocomplete] Dropdown SHOWN with ${smartSuggestions.length} suggestions`);
+      } catch (err) {
+        console.error('❌ [Autocomplete] Suggestion error:', err);
+        setSuggestions([]);
+        setShowDropdown(true); // Affiche quand même pour montrer "aucun résultat"
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+  };
+
+  const onSelectSuggestion = (suggestion: SmartSuggestion) => {
+    setQ(suggestion.suggestion);
+    setShowDropdown(false);
+
+    // Si c'est une entreprise, aller directement vers la fiche
+    if (suggestion.type === 'entreprise' && suggestion.entreprise_id) {
+      const url = generateBusinessUrl(suggestion.suggestion, suggestion.entreprise_id);
+      console.log('🔗 Navigation vers entreprise:', url);
+      navigate(url);
+      return;
+    }
+
+    // Sinon, lancer la recherche dans la liste
+    const params = new URLSearchParams();
+    params.set('q', suggestion.suggestion);
+    if (city.trim()) params.set('ville', city.trim());
+    navigate(`/entreprises?${params.toString()}`);
+
+    if (onSearch) {
+      onSearch(suggestion.suggestion, city.trim());
+    }
+  };
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (q.trim().length >= MIN_CHARS) {
+      const params = new URLSearchParams();
+      params.set('q', q.trim());
+      if (city.trim()) params.set('ville', city.trim());
+      navigate(`/entreprises?${params.toString()}`);
+      setShowDropdown(false);
+
+      if (onSearch) {
+        onSearch(q.trim(), city.trim());
+      }
+    }
+  };
+
+  const getSuggestionIcon = (type: string) => {
+    switch (type) {
+      case 'secteur':
+        return <Briefcase className="w-4 h-4 text-[#4A1D43]" />;
+      case 'categorie':
+        return <Tag className="w-4 h-4 text-[#D4AF37]" />;
+      case 'sous_categorie':
+        return <Tag className="w-4 h-4 text-gray-500" />;
+      case 'entreprise':
+        return <Building2 className="w-4 h-4 text-gray-600" />;
+      default:
+        return <Search className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getSuggestionTypeLabel = (type: string) => {
+    const labels: Record<string, Record<string, string>> = {
+      secteur: { fr: 'Secteur', ar: 'قطاع', en: 'Sector' },
+      categorie: { fr: 'Catégorie', ar: 'فئة', en: 'Category' },
+      sous_categorie: { fr: 'Sous-catégorie', ar: 'فئة فرعية', en: 'Subcategory' },
+      entreprise: { fr: 'Entreprise', ar: 'شركة', en: 'Business' }
+    };
+    return labels[type]?.[language] || labels[type]?.['fr'] || type;
+  };
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className={`relative w-full z-[10000] ${className}`}
+      data-search-bar="unified"
+    >
+      <div className="w-full grid grid-cols-1 md:grid-cols-[1fr_280px_auto] gap-2.5">
+        <div className="relative z-10">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A1D43] pointer-events-none" />
+            <input
+              type="search"
+              inputMode="search"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              dir={dir}
+              placeholder={getPlaceholder()}
+              className="w-full pl-10 pr-3 py-2 rounded-lg border border-[#D4AF37] bg-white text-sm focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none"
+              value={q}
+              onChange={onChangeQuery}
+              onFocus={() => {
+                if (q.trim().length >= MIN_CHARS) {
+                  setShowDropdown(true);
+                }
+              }}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+            />
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <LocationSelectTunisie
+            value={city}
+            onChange={setCity}
+            placeholder={t(language as Lang, 'search.placeholderCity')}
+            className="px-3 py-2 rounded-lg text-sm"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="px-6 py-2 bg-[#4A1D43] text-white rounded-lg hover:bg-[#5A2D53] transition-colors font-medium text-sm whitespace-nowrap"
+        >
+          {t(language as Lang, 'search.search')}
+        </button>
+      </div>
+
+      {showDropdown && (
+        <div
+          className="absolute left-0 right-0 mt-2 rounded-xl border border-[#D4AF37] bg-white shadow-xl max-h-[450px] overflow-auto z-[10001]"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <ul className="divide-y divide-gray-100">
+            {loading && (
+              <li className="py-3 px-4 text-sm text-gray-500 flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+                {t(language as Lang, 'search.loading')}
+              </li>
+            )}
+
+            {!loading && suggestions.length === 0 && q.trim().length >= MIN_CHARS && (
+              <li className="py-3 px-4 text-sm text-gray-500 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <Search className="w-5 h-5 text-gray-400" />
+                  <span>Aucune suggestion trouvée pour "{q}"</span>
+                  <span className="text-xs">Essayez un autre terme de recherche</span>
+                </div>
+              </li>
+            )}
+
+            {!loading && suggestions.map((suggestion, index) => (
+              <li
+                key={`${suggestion.type}-${suggestion.suggestion}-${index}`}
+                className="py-2.5 px-4 cursor-pointer hover:bg-gradient-to-r hover:from-[#D4AF37]/5 hover:to-transparent transition-all group"
+                onMouseDown={(e) => { e.preventDefault(); onSelectSuggestion(suggestion); }}
+              >
+                <div className="font-medium text-gray-900 text-sm group-hover:text-[#4A1D43] transition-colors">
+                  {suggestion.suggestion}
+                </div>
+              </li>
+            ))}
+
+            {!loading && suggestions.length > 0 && (
+              <li className="py-2.5 px-4 bg-gradient-to-r from-gray-50 to-transparent">
+                <button
+                  type="submit"
+                  className="w-full text-left text-sm font-medium text-[#4A1D43] hover:text-[#5A2D53] transition-colors flex items-center gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>{t(language as Lang, 'search.seeAll')} →</span>
+                </button>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </form>
+  );
+}

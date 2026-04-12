@@ -1,0 +1,29 @@
+For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+
+By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
+
+Use icons from lucide-react for logos.## 
+
+Règles techniques (à appliquer sans changer le design)
+
+### Supabase (base de données) :
+- Les colonnes avec accents (ex: "catégorie") doivent être entourées de guillemets doubles : `"catégorie"`
+- Ne jamais écrire `categorie` sans accent si la colonne a un accent
+- Les colonnes de type tableau (text[]) doivent être filtrées avec `.contains()` ou `unnest()`
+- Le statut des entreprises est `'approved'` (pas `'active'`)
+
+### Netlify (déploiement) :
+- Le fichier `netlify.toml` doit contenir : `base = "project"` et `publish = "project/dist"`
+- La version Node.js doit être 20
+
+### Code (React/TypeScript) :
+- Les imports et exports doivent être cohérents (ne pas mélanger default et named)
+- Ne pas installer de packages inutiles
+- Garder le design actuel (couleurs, marges, polices) strictement identique
+- Ne changer que la logique interne, jamais l'apparence visuelle
+
+### Déploiement :
+- Le build doit réussir en local avant de proposer du code
+- Tester avec `npm run build` avant de livrer
+
+⚠️ IMPORTANT : Ne jamais modifier le design (couleurs, espacements, tailles, polices). Change seulement le code technique (requêtes, composants, configuration).
