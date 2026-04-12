@@ -965,3 +965,4 @@ export const BusinessDetail = ({
 
   return content;
 };
+  
