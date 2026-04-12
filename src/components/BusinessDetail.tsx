@@ -588,9 +588,13 @@ export const BusinessDetail = ({
             </div>
             <div className="flex items-center gap-1 font-bold truncate max-w-full px-1" style={{ color: colors.gold }}>
               <Phone size={11} className="flex-shrink-0" />
-              <a href={`tel:${business.telephone}`} onClick={(e) => e.stopPropagation()} className="hover:underline truncate cursor-pointer">
+              <button
+                onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${business.telephone}`; }}
+                className="hover:underline truncate cursor-pointer bg-transparent border-none p-0 font-bold text-xs"
+                style={{ color: colors.gold }}
+              >
                 {business.telephone}
-              </a>
+              </button>
             </div>
           </div>
 
@@ -767,8 +771,21 @@ export const BusinessDetail = ({
               )}
             </div>
 
+            {/* Bouton Site Web */}
+            {business.site_web && (
+              <button
+                onClick={(e) => { e.stopPropagation(); window.open(business.site_web!.startsWith('http') ? business.site_web! : `https://${business.site_web}`, '_blank'); }}
+                className="inline-flex items-center gap-0.5 text-white px-2 py-0.5 rounded-full font-bold text-[8px] uppercase tracking-wide shadow-lg hover:scale-105 transition-transform flex-shrink-0 cursor-pointer"
+                style={{ backgroundColor: '#1a7f5a' }}
+                title={business.site_web}
+              >
+                <Globe size={9} strokeWidth={3} />
+                <span className="truncate max-w-[80px]">Site web</span>
+              </button>
+            )}
+
             {/* Bouton GPS - Pilule compacte */}
-            {(business.latitude && business.longitude) && (
+            {(business.latitude && business.longitude) || business.adresse ? (
               <a
                 href={getGoogleMapsDirectionsUrl(business.latitude, business.longitude, business.adresse)}
                 target="_blank"
@@ -780,7 +797,7 @@ export const BusinessDetail = ({
                 <Navigation size={9} strokeWidth={3} />
                 <span className="truncate max-w-[100px]">{text.directions}</span>
               </a>
-            )}
+            ) : null}
           </div>
 
           {/* QR Code - Collé sans marge */}
