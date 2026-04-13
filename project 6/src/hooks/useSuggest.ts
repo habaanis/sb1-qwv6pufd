@@ -78,11 +78,11 @@ export function useSuggest(options: UseSuggestOptions = {}): UseSuggestResult {
       if (entreprisesResult.error) {
         console.warn('RPC enterprise_suggest_filtered failed, using fallback:', entreprisesResult.error.message);
 
-        // Fallback: direct query
+        // Fallback: direct query on nom and catégorie
         const { data: fallbackData, error: fallbackError } = await selectLikeLog<EntrepriseItem>(
           Tables.ENTREPRISE,
           'nom',
-          `${q}%`,
+          `%${q}%`,
           8,
           { component: 'useSuggest-fallback', scope: 'entreprise' }
         );

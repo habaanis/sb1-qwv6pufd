@@ -43,7 +43,7 @@ export const WhatsAppSupport = ({
   };
 
   const handleMessengerClick = () => {
-    window.open(`https://m.me/${messengerPageId}`, '_blank');
+    window.open('https://m.me/daliltounes', '_blank');
   };
 
   return (
